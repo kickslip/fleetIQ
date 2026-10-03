@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 import { API_URL } from '@/lib/api';
 
 export default function LoginPage() {
@@ -34,28 +35,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <form onSubmit={submit} className="card w-full max-w-sm space-y-4 p-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <div className="orb bg-primary/25 w-[460px] h-[460px] top-[-160px] right-[-80px]" />
+      <div className="orb bg-cyan/15 w-[380px] h-[380px] bottom-[-140px] left-[-60px]" />
+
+      <form onSubmit={submit} className="glass border-flow relative z-10 w-full max-w-sm rounded-[2rem] p-9 space-y-5">
         <div>
-          <div className="text-2xl font-bold">Fleet<span className="text-sky-400">IQ</span></div>
-          <p className="mt-1 text-sm text-slate-400">Sign in to the operations portal</p>
+          <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center mb-5">
+            <Icon icon="solar:radar-bold-duotone" className="text-2xl text-primary" />
+          </div>
+          <div className="text-2xl font-bold tracking-tight">Fleet<span className="text-primary">IQ</span></div>
+          <p className="mt-1.5 text-sm text-muted">Sign in to the operations portal</p>
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-slate-400">Email</label>
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted">Email</label>
           <input className="w-full" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-slate-400">Password</label>
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted">Password</label>
           <input className="w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-pink">{error}</p>}
         <button
           disabled={loading}
-          className="w-full rounded-lg bg-sky-600 py-2 text-sm font-semibold hover:bg-sky-500 disabled:opacity-50"
+          className="liquid-btn glass border-flow w-full rounded-full py-3 text-sm font-semibold hover:scale-[1.02] transition disabled:opacity-50"
         >
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
-        <p className="text-[11px] leading-relaxed text-slate-500">
+        <p className="text-[11px] leading-relaxed text-muted">
           Demo logins — admin@fleet.demo · dispatch@fleet.demo (password: demo123)
         </p>
       </form>

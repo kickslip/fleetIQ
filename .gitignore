@@ -12,3 +12,5 @@ android/
 ios/
 .expo/
 financial-infrastructure-for-internet-businesses-nextjs/
+!financial-infrastructure-for-internet-businesses-nextjs/page.tsx
+!financial-infrastructure-for-internet-businesses-nextjs/video.mp4
