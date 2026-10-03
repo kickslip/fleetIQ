@@ -69,7 +69,32 @@ export default function Documents() {
         </form>
       )}
 
-      <div className="card overflow-x-auto">
+      {/* mobile: card list */}
+      <div className="md:hidden space-y-3">
+        {docs.map((d) => (
+          <div key={d.id} className="card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <span className={`h-2.5 w-2.5 rounded-full ${badge(d.days_left)}`} />
+                {d.entity_name}
+              </span>
+              <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${badge(d.days_left)}`}>
+                {d.days_left < 0 ? `${-d.days_left}d overdue` : `${d.days_left}d left`}
+              </span>
+            </div>
+            <div className="mt-1 text-sm capitalize">{d.doc_type.replace(/_/g, ' ')}</div>
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+              <span className="capitalize">{d.entity_type} · expires {d.expiry_date}</span>
+              <button onClick={async () => { await api(`/api/documents/${d.id}`, { method: 'DELETE' }); refresh(); }}
+                className="text-red-400 hover:text-red-300">Delete</button>
+            </div>
+          </div>
+        ))}
+        {docs.length === 0 && <p className="card p-6 text-center text-sm text-slate-500">No documents.</p>}
+      </div>
+
+      {/* desktop: table */}
+      <div className="card overflow-x-auto hidden md:block">
         <table className="w-full">
           <thead><tr>
             <th>Status</th><th>Entity</th><th>Type</th><th>Document</th><th>Expiry</th><th>Days left</th><th></th>

@@ -58,7 +58,33 @@ export default function Fuel() {
       </div>
       {msg && <p className="mb-3 text-sm text-emerald-400">{msg}</p>}
 
-      <div className="card overflow-x-auto">
+      {/* mobile: card list */}
+      <div className="md:hidden space-y-3">
+        {txns.map((t) => (
+          <div key={t.id} className={`card p-4 ${t.status === 'suspicious' ? 'border-red-500/40' : ''}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${
+                t.status === 'suspicious' ? 'bg-red-600' : 'bg-emerald-700'}`}>
+                {t.status === 'suspicious' ? 'SUSPICIOUS' : 'OK'}
+              </span>
+              <span className="font-mono text-xs">{t.reg_number ?? '—'} <span className="text-slate-500">{t.card_number}</span></span>
+            </div>
+            <div className="mt-2 text-sm">{t.station_name}</div>
+            <div className="mt-1 text-xs text-slate-400">
+              {t.litres} L · {t.currency} {t.amount} · {new Date(t.txn_at).toLocaleString()}
+            </div>
+            {t.flag_reason && <div className="mt-2 text-xs text-red-300">{t.flag_reason}</div>}
+          </div>
+        ))}
+        {txns.length === 0 && (
+          <p className="card p-6 text-center text-sm text-slate-500">
+            No transactions yet — upload <code>scripts/sample-fuel.csv</code>
+          </p>
+        )}
+      </div>
+
+      {/* desktop: table */}
+      <div className="card overflow-x-auto hidden md:block">
         <table className="w-full">
           <thead><tr>
             <th>Status</th><th>Vehicle / Card</th><th>Station</th><th>Litres</th><th>Amount</th><th>Swipe time</th><th>Flag reason</th>

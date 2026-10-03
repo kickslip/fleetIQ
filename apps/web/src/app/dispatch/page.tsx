@@ -78,7 +78,51 @@ export default function Dispatch() {
         </form>
       )}
 
-      <div className="card overflow-x-auto">
+      {/* mobile: card list */}
+      <div className="md:hidden space-y-3">
+        {jobs.map((j) => (
+          <div key={j.id} className="card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs text-slate-500">{j.ref}</span>
+              <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${JOB_COLORS[j.status]}`}>
+                {j.status.replace('_', ' ')}
+              </span>
+            </div>
+            <div className="mt-2 text-sm font-medium">{j.title}</div>
+            <div className="mt-1 text-xs text-slate-400">
+              {j.pickup_address} <span className="text-slate-600">→</span> {j.dropoff_address}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              {j.driver_name ? (
+                <span className="text-xs text-slate-300">{j.driver_name}</span>
+              ) : (
+                <select defaultValue="" onChange={(e) => assign(j.id, e.target.value)} className="text-xs">
+                  <option value="" disabled>Assign…</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}{d.vehicle_reg ? ` (${d.vehicle_reg})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <span className="text-xs">
+                {j.pod_photo_path && (
+                  <a href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}${j.pod_photo_path}`}
+                    target="_blank" className="text-sky-400 underline">photo</a>
+                )}
+                {j.pod_signature_path && (
+                  <a href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}${j.pod_signature_path}`}
+                    target="_blank" className="ml-2 text-sky-400 underline">signature</a>
+                )}
+              </span>
+            </div>
+          </div>
+        ))}
+        {jobs.length === 0 && <p className="card p-6 text-center text-sm text-slate-500">No jobs yet.</p>}
+      </div>
+
+      {/* desktop: table */}
+      <div className="card overflow-x-auto hidden md:block">
         <table className="w-full">
           <thead><tr>
             <th>Ref</th><th>Job</th><th>Pickup</th><th>Drop-off</th><th>Status</th><th>Driver</th><th>POD</th>

@@ -54,7 +54,33 @@ export default function Vehicles() {
         </form>
       )}
 
-      <div className="card overflow-x-auto">
+      {/* mobile: card list */}
+      <div className="md:hidden space-y-3">
+        {list.map((v) => (
+          <div key={v.id} className="card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-sm font-semibold">{v.reg_number}</span>
+              <span className="flex items-center gap-1.5 text-xs capitalize">
+                <span className="h-2 w-2 rounded-full" style={{ background: VEHICLE_COLORS[v.status] }} />
+                {v.status}
+              </span>
+            </div>
+            <div className="mt-1 text-sm">{v.make} {v.model} {v.year ? `(${v.year})` : ''}</div>
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+              <span>{v.driver_name ?? 'unassigned'}</span>
+              <span className="font-mono">{(v as any).fuel_card_number ?? '—'}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
+              <span>{v.current_speed ? `${Math.round(v.current_speed)} km/h` : 'stationary'}</span>
+              <span>seen {timeAgo(v.last_seen_at)}</span>
+            </div>
+          </div>
+        ))}
+        {list.length === 0 && <p className="card p-6 text-center text-sm text-slate-500">No vehicles.</p>}
+      </div>
+
+      {/* desktop: table */}
+      <div className="card overflow-x-auto hidden md:block">
         <table className="w-full">
           <thead><tr>
             <th>Reg</th><th>Vehicle</th><th>Driver</th><th>Fuel card</th><th>Status</th><th>Speed</th><th>Last seen</th>
