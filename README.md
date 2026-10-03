@@ -66,12 +66,47 @@ npx expo run:android --variant release   # needs local Android SDK/JDK
 
 ## Config
 
+See `.env.example`. Key vars:
+
 | Env var | Default | Where |
 |---|---|---|
 | `PORT` | `4000` | server |
 | `JWT_SECRET` | dev secret | server (set in production) |
+| `SMTP_*`, `ALERT_EMAIL_TO` | unset | server — email alerts for critical events (optional) |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | web portal |
 | `API_URL` | `http://localhost:4000` | scripts |
+
+## Notifications
+
+- **In-app alerts (default, free):** every geofence breach, fuel-fraud flag, DTC
+  fault and job completion appears live in the portal's alert feed via WebSocket.
+- **Email alerts (free tier):** set the `SMTP_*` vars — critical alerts are
+  emailed to `ALERT_EMAIL_TO`. Gmail app-password or Brevo free (300/day) both work.
+- **SMS (later):** Twilio trial or Clickatell once funded — the `createAlert()`
+  hook in `apps/server/src/alerts.ts` is the single integration point.
+
+## Free hosting options
+
+| Setup | Cost | Notes |
+|---|---|---|
+| Laptop (current) | R0 | Best for the demo — no Wi-Fi needed |
+| Vercel + Render free | R0 | Portal on Vercel, API on Render (sleeps ~15 min idle → 30 s cold start) |
+| Vercel + Supabase | later | Needs the Postgres migration the schema was designed for |
+
+### Deploy for testing (free)
+
+1. **API → Render:** Dashboard → *New → Blueprint* → select this repo —
+   `render.yaml` provisions a free `fleetiq-api` web service
+   (URL like `https://fleetiq-api.onrender.com`). `SEED_ON_BOOT=1`
+   auto-seeds the demo data on first boot — no shell needed.
+2. **Portal → Vercel:** *Add New → Project* → import repo → set
+   **Root Directory** to `apps/web` → add env var
+   `NEXT_PUBLIC_API_URL=https://fleetiq-api.onrender.com` → deploy.
+3. **Driver app:** on the login screen set *Server* to your Render URL.
+
+⚠️ Render free caveats: sleeps after ~15 min idle (~30 s cold start —
+keep the tab warm during presentations) and the SQLite DB lives on
+ephemeral disk, so data resets on redeploy (demo re-seeds automatically).
 
 ## Notes & roadmap (post-funding)
 

@@ -7,6 +7,7 @@ const CENTER = { lat: -26.2041, lng: 28.0473 };
 const TICK_MS = 3000;
 
 interface SimVehicle {
+  orgId: number;
   vehicleId: number;
   route: { lat: number; lng: number }[];
   segment: number;
@@ -44,7 +45,7 @@ function makeRoute(via?: { lat: number; lng: number }): { lat: number; lng: numb
 }
 
 function tick() {
-  const batch: PositionIngest[] = [];
+  const byOrg = new Map<number, PositionIngest[]>();
   for (const s of sims) {
     const a = s.route[s.segment];
     const b = s.route[(s.segment + 1) % s.route.length];
@@ -56,9 +57,11 @@ function tick() {
     const lat = a.lat + (b.lat - a.lat) * s.t;
     const lng = a.lng + (b.lng - a.lng) * s.t;
     const heading = Math.atan2(b.lng - a.lng, b.lat - a.lat) * (180 / Math.PI);
+    const batch = byOrg.get(s.orgId) ?? [];
     batch.push({ vehicle_id: s.vehicleId, lat, lng, speed: s.speedKmh, heading });
+    byOrg.set(s.orgId, batch);
   }
-  if (batch.length) ingestPositions(batch);
+  for (const [orgId, positions] of byOrg) ingestPositions(orgId, positions);
 }
 
 function dist(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
@@ -73,18 +76,25 @@ function dist(a: { lat: number; lng: number }, b: { lat: number; lng: number }) 
 
 export function startSim(): { running: boolean; vehicles: number } {
   if (timer) return { running: true, vehicles: sims.length };
-  const vehicles = listVehicles();
-  const fences = db
-    .prepare('SELECT lat, lng FROM geofences ORDER BY RANDOM()')
-    .all() as unknown as { lat: number; lng: number }[];
-  sims = vehicles.map((v, i) => ({
-    vehicleId: v.id,
-    // Every 3rd vehicle is routed through a geofence — guarantees demo alerts
-    route: makeRoute(i % 3 === 0 ? fences[i % fences.length] : undefined),
-    segment: 0,
-    t: 0,
-    speedKmh: 25 + Math.random() * 45,
-  }));
+  const orgs = db.prepare('SELECT DISTINCT org_id FROM vehicles').all() as unknown as { org_id: number }[];
+  sims = [];
+  for (const { org_id } of orgs) {
+    const vehicles = listVehicles(org_id);
+    const fences = db
+      .prepare('SELECT lat, lng FROM geofences WHERE org_id = ? ORDER BY RANDOM()')
+      .all(org_id) as unknown as { lat: number; lng: number }[];
+    for (const [i, v] of vehicles.entries()) {
+      sims.push({
+        orgId: org_id,
+        vehicleId: v.id,
+        // Every 3rd vehicle is routed through a geofence — guarantees demo alerts
+        route: makeRoute(fences.length && i % 3 === 0 ? fences[i % fences.length] : undefined),
+        segment: 0,
+        t: 0,
+        speedKmh: 25 + Math.random() * 45,
+      });
+    }
+  }
   timer = setInterval(tick, TICK_MS);
   return { running: true, vehicles: sims.length };
 }

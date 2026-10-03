@@ -140,10 +140,10 @@ export default function Landing() {
 
                 <div className="glass border-flow noise rounded-[4rem] overflow-hidden absolute inset-0 shadow-liquid">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[.08] via-transparent to-transparent z-10" />
-                  <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-90 mask-video">
+                  <video autoPlay muted loop playsInline className="w-full h-full object-cover mask-video">
                     <source src="/video.mp4" type="video/mp4" />
                   </video>
-                  <div className="absolute inset-0 bg-gradient-to-l from-black via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-l from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-10 right-10 z-20">
                     <div className="glass rounded-full px-5 py-3 flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />

@@ -9,13 +9,13 @@ import type { FuelTransaction } from '@fleet/shared';
 const PROXIMITY_M = 100;       // vehicle must be within 100 m of station
 const WINDOW_MIN = 20;         // within ±20 min of the card swipe
 
-function checkTransaction(txn: FuelTransaction): Pick<FuelTransaction, 'status' | 'flag_reason' | 'distance_m'> {
+function checkTransaction(txn: FuelTransaction, orgId: number): Pick<FuelTransaction, 'status' | 'flag_reason' | 'distance_m'> {
   if (!txn.vehicle_id) {
     return { status: 'suspicious', flag_reason: 'Card not linked to any vehicle', distance_m: null };
   }
-  const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(txn.vehicle_id) as
-    | { reg_number: string; fuel_tank_litres: number | null }
-    | undefined;
+  const vehicle = db
+    .prepare('SELECT * FROM vehicles WHERE id = ? AND org_id = ?')
+    .get(txn.vehicle_id, orgId) as { reg_number: string; fuel_tank_litres: number | null } | undefined;
   if (vehicle?.fuel_tank_litres && txn.litres > vehicle.fuel_tank_litres) {
     return {
       status: 'suspicious',
@@ -49,21 +49,23 @@ function checkTransaction(txn: FuelTransaction): Pick<FuelTransaction, 'status' 
   return { status: 'ok', flag_reason: null, distance_m: Math.round(d) };
 }
 
-export function runFraudCheck(txnId: number) {
-  const txn = db.prepare('SELECT * FROM fuel_transactions WHERE id = ?').get(txnId) as unknown as
-    FuelTransaction | undefined;
+export function runFraudCheck(txnId: number, orgId: number) {
+  const txn = db
+    .prepare('SELECT * FROM fuel_transactions WHERE id = ? AND org_id = ?')
+    .get(txnId, orgId) as unknown as FuelTransaction | undefined;
   if (!txn) return;
-  const verdict = checkTransaction(txn);
+  const verdict = checkTransaction(txn, orgId);
   db.prepare('UPDATE fuel_transactions SET status = ?, flag_reason = ?, distance_m = ? WHERE id = ?')
     .run(verdict.status, verdict.flag_reason, verdict.distance_m, txnId);
   if (verdict.status === 'suspicious') {
     const reg = txn.vehicle_id
-      ? (db.prepare('SELECT reg_number FROM vehicles WHERE id = ?').get(txn.vehicle_id) as { reg_number: string }).reg_number
-      : txn.card_number;
+      ? (db.prepare('SELECT reg_number FROM vehicles WHERE id = ?').get(txn.vehicle_id) as { reg_number: string } | undefined)?.reg_number
+      : undefined;
     createAlert({
+      org_id: orgId,
       type: 'fuel_fraud',
       severity: 'critical',
-      title: `Suspicious fuel purchase — ${reg}`,
+      title: `Suspicious fuel purchase — ${reg ?? txn.card_number}`,
       body: `${txn.station_name}: ${verdict.flag_reason}`,
       vehicle_id: txn.vehicle_id,
     });
@@ -73,18 +75,21 @@ export function runFraudCheck(txnId: number) {
 export default async function fuelRoutes(app: FastifyInstance) {
   app.addHook('preHandler', requireAuth);
 
-  app.get('/api/fuel/transactions', async () => {
+  app.get('/api/fuel/transactions', async (req) => {
     return db
       .prepare(
         `SELECT f.*, v.reg_number FROM fuel_transactions f
          LEFT JOIN vehicles v ON v.id = f.vehicle_id
+         WHERE f.org_id = ?
          ORDER BY f.txn_at DESC LIMIT 200`
       )
-      .all();
+      .all(req.user!.orgId);
   });
 
   // CSV columns: card_number, station_name, station_lat, station_lng, litres, amount, txn_at
+  // Idempotent: dedupe_key prevents the same swipe importing twice.
   app.post('/api/fuel/import', async (req, reply) => {
+    const orgId = req.user!.orgId;
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: 'No CSV file uploaded' });
     const text = (await file.toBuffer()).toString('utf8');
@@ -94,28 +99,30 @@ export default async function fuelRoutes(app: FastifyInstance) {
       transformHeader: (h) => h.trim().toLowerCase(),
     });
     const insert = db.prepare(
-      `INSERT INTO fuel_transactions
-         (card_number, station_name, station_lat, station_lng, litres, amount, currency, txn_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT OR IGNORE INTO fuel_transactions
+         (org_id, card_number, station_name, station_lat, station_lng, litres, amount, currency, txn_at, dedupe_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
-    const cardToVehicle = db.prepare('SELECT id FROM vehicles WHERE fuel_card_number = ?');
+    const cardToVehicle = db.prepare('SELECT id FROM vehicles WHERE fuel_card_number = ? AND org_id = ?');
     const ids: number[] = [];
+    let duplicates = 0;
     for (const row of parsed.data) {
-      const card = row.card_number?.trim();
-      const vehicle = card ? (cardToVehicle.get(card) as { id: number } | undefined) : undefined;
+      const card = row.card_number?.trim() ?? null;
+      const vehicle = card ? (cardToVehicle.get(card, orgId) as { id: number } | undefined) : undefined;
+      const txnAt = row.txn_at ?? new Date().toISOString();
+      const dedupeKey = `${card}|${txnAt}|${row.litres}|${row.amount}|${row.station_name}`;
       const res = insert.run(
-        card ?? null,
-        row.station_name ?? 'Unknown station',
+        orgId, card, row.station_name ?? 'Unknown station',
         Number(row.station_lat), Number(row.station_lng),
         Number(row.litres), Number(row.amount),
-        row.currency ?? 'ZAR',
-        row.txn_at ?? new Date().toISOString()
+        row.currency ?? 'ZAR', txnAt, dedupeKey
       );
+      if (res.changes === 0) { duplicates++; continue; }
       const id = res.lastInsertRowid as number;
       if (vehicle) db.prepare('UPDATE fuel_transactions SET vehicle_id = ? WHERE id = ?').run(vehicle.id, id);
       ids.push(id);
     }
-    for (const id of ids) runFraudCheck(id);
-    return { imported: ids.length };
+    for (const id of ids) runFraudCheck(id, orgId);
+    return { imported: ids.length, duplicates };
   });
 }

@@ -2,6 +2,7 @@ export type Role = 'admin' | 'dispatcher' | 'driver';
 
 export interface User {
   id: number;
+  org_id: number;
   email: string;
   name: string;
   role: Role;
@@ -13,6 +14,7 @@ export type VehicleStatus = 'active' | 'idle' | 'offline' | 'maintenance';
 
 export interface Vehicle {
   id: number;
+  org_id: number;
   reg_number: string;
   make: string;
   model: string;
@@ -150,6 +152,7 @@ export type WsEvent =
 // Position ingest payload from driver app / simulator
 export interface PositionIngest {
   vehicle_id: number;
+  client_id?: string;   // idempotency key — retries with same key are ignored
   lat: number;
   lng: number;
   speed?: number;

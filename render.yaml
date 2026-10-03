@@ -1,0 +1,18 @@
+# Render Blueprint — deploys the API as a free web service.
+# Dashboard → New → Blueprint → point at this repo.
+services:
+  - type: web
+    name: fleetiq-api
+    runtime: node
+    plan: free
+    # Only install the workspaces the API needs (skips next/expo heavies)
+    buildCommand: npm install -w @fleet/shared -w @fleet/server
+    startCommand: npm run start -w apps/server
+    healthCheckPath: /api/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: SEED_ON_BOOT
+        value: "1"

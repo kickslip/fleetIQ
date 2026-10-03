@@ -50,6 +50,8 @@ export default function MapView({
   const pendingRef = useRef<Marker | null>(null);
   const clickRef = useRef(onVehicleClick);
   clickRef.current = onVehicleClick;
+  const mapClickRef = useRef(onMapClick);
+  mapClickRef.current = onMapClick;
 
   // Init map once
   useEffect(() => {
@@ -76,7 +78,7 @@ export default function MapView({
         paint: { 'line-color': '#818cf8', 'line-width': 3, 'line-opacity': 0.85 },
       });
     });
-    map.on('click', (e) => onMapClick?.(e.lngLat.lng, e.lngLat.lat));
+    map.on('click', (e) => mapClickRef.current?.(e.lngLat.lng, e.lngLat.lat));
     mapRef.current = map;
     return () => {
       map.remove();

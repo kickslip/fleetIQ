@@ -19,6 +19,11 @@ async function queuePosition(p: any) {
   await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-500)));
 }
 
+export async function queueSize(): Promise<number> {
+  const raw = await AsyncStorage.getItem(QUEUE_KEY);
+  return raw ? JSON.parse(raw).length : 0;
+}
+
 export async function flushQueue(): Promise<number> {
   const session = await getSession();
   if (!session?.vehicleId) return 0;
@@ -48,6 +53,8 @@ export async function reportLocation(loc: Location.LocationObject) {
   if (!session?.vehicleId) return;
   const p = {
     vehicle_id: session.vehicleId,
+    // Idempotency key — if the queue flush retries, the server ignores dupes
+    client_id: `${loc.timestamp}-${Math.random().toString(36).slice(2)}`,
     lat: loc.coords.latitude,
     lng: loc.coords.longitude,
     speed: loc.coords.speed != null && loc.coords.speed >= 0 ? loc.coords.speed * 3.6 : 0,

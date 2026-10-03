@@ -161,8 +161,8 @@ body::before {
 }
 
 .mask-video {
-  mask-image: radial-gradient(circle at 70% 50%, black 40%, transparent 88%);
-  -webkit-mask-image: radial-gradient(circle at 70% 50%, black 40%, transparent 88%);
+  mask-image: radial-gradient(circle at 65% 50%, black 62%, transparent 96%);
+  -webkit-mask-image: radial-gradient(circle at 65% 50%, black 62%, transparent 96%);
 }
 
 .portal {

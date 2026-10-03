@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Switch } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { api, getSession, clearSession } from '../lib/api';
-import { startTracking, stopTracking, isOnDuty, flushQueue } from '../lib/tracking';
+import { startTracking, stopTracking, isOnDuty, flushQueue, queueSize } from '../lib/tracking';
 
 const STATUS_COLORS: Record<string, string> = {
   assigned: '#0284c7', accepted: '#4f46e5', en_route: '#d97706',
@@ -23,8 +23,8 @@ export default function JobsScreen() {
     const j = await api<any[]>(`/api/jobs?driver_id=${s.user.id}`).catch(() => []);
     setJobs(j);
     setOnDuty(await isOnDuty());
-    const n = await flushQueue();
-    setQueued(n >= 0 ? 0 : queued);
+    await flushQueue();
+    setQueued(await queueSize());
   }
 
   useFocusEffect(useCallback(() => { void load(); }, []));

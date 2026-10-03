@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { WS_URL } from './api';
+import { WS_URL, getToken } from './api';
 import type { Alert, Job, Vehicle, WsEvent } from '@fleet/shared';
 
 interface FleetState {
@@ -25,7 +25,9 @@ export function useFleet() {
     let retry: NodeJS.Timeout;
 
     function connect() {
-      const ws = new WebSocket(WS_URL);
+      const token = getToken();
+      if (!token) return;
+      const ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
       wsRef.current = ws;
       ws.onopen = () => setState((s) => ({ ...s, connected: true }));
       ws.onclose = () => {
