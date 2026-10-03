@@ -89,6 +89,17 @@ export default function Landing() {
                 </a>
               </div>
 
+              <div className="xl:hidden mt-10 glass border-flow noise rounded-[2rem] overflow-hidden relative">
+                <video autoPlay muted loop playsInline className="w-full h-56 object-cover">
+                  <source src="/video.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 glass rounded-full px-4 py-2 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs tracking-wide text-muted">Live fleet feed</span>
+                </div>
+              </div>
+
               <div className="mt-20 grid sm:grid-cols-3 gap-5">
                 <div className="glass border-flow rounded-[2rem] p-5">
                   <p className="text-4xl font-semibold tracking-tight">15s</p>

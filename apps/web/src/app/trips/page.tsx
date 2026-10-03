@@ -78,7 +78,7 @@ export default function Trips() {
           </>
         )}
       </div>
-      <div className="card" style={{ height: 'calc(100vh - 220px)' }}>
+      <div className="card h-[55vh] lg:h-[calc(100vh-220px)]">
         <MapView
           vehicles={playbackVehicle ? [playbackVehicle] : []}
           trail={positions.slice(0, idx + 1)}

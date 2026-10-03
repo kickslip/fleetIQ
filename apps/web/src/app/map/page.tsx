@@ -31,11 +31,11 @@ export default function LiveMap() {
 
   return (
     <Shell title="Live Vehicle Map">
-      <div className="flex gap-4" style={{ height: 'calc(100vh - 140px)' }}>
-        <div className="card flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 lg:h-[calc(100vh-140px)]">
+        <div className="card h-[55vh] lg:h-auto flex-1 overflow-hidden">
           <MapView vehicles={list} geofences={geofences} trail={trail} onVehicleClick={showTrail} />
         </div>
-        <div className="card w-72 shrink-0 overflow-auto">
+        <div className="card w-full lg:w-72 shrink-0 overflow-auto max-h-[35vh] lg:max-h-none">
           <div className="border-b border-[var(--border)] px-4 py-3 text-sm font-semibold">Fleet</div>
           {list.map((v) => (
             <button

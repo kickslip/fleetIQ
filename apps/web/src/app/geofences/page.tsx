@@ -34,8 +34,8 @@ export default function Geofences() {
 
   return (
     <Shell title="Geofences">
-      <div className="flex gap-4" style={{ height: 'calc(100vh - 140px)' }}>
-        <div className="card flex-1 overflow-hidden relative">
+      <div className="flex flex-col lg:flex-row gap-4 lg:h-[calc(100vh-140px)]">
+        <div className="card h-[50vh] lg:h-auto flex-1 overflow-hidden relative">
           <MapView
             vehicles={[...vehicles.values()]}
             geofences={fences}
@@ -46,7 +46,7 @@ export default function Geofences() {
             Click the map to place a new geofence centre
           </div>
         </div>
-        <div className="w-80 shrink-0 space-y-4 overflow-auto">
+        <div className="w-full lg:w-80 shrink-0 space-y-4 overflow-auto">
           {pending && (
             <form onSubmit={create} className="card space-y-3 p-4">
               <h3 className="text-sm font-semibold">New geofence</h3>
